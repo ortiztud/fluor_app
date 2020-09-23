@@ -13,9 +13,11 @@ import time
 from sklearn.linear_model import LinearRegression
 
 # Global variables
-height = 100
+height = 300
 width = 500
-
+method = 999
+method_lab = "default"
+   
 # Define window close
 def quit():
 
@@ -24,36 +26,36 @@ def quit():
 	gbye = tk.Tk()
 
 	# Create canvas
-	canvas = tk.Canvas(gbye, height = 100, width = 500, bg='#6dda00')
+	canvas = tk.Canvas(gbye, height = 100, width = 500, bg='#005fcd')
 	canvas.pack()
 	
 	# Create frame
-	frame = tk.Frame(gbye, bg='#6dda00')
-	frame.place(relx=0.1, relwidth=0.8, relheight=1)
+	frame = tk.Frame(gbye, bg='#005fcd')
+	frame.place(relwidth=1, relheight=1)
 
 	# Create prompt
-	label = tk.Label(frame, text="Conversion complete. 'output.xlsx' created", bg="white", fg="black")
-	label.pack(side="top", fill="x")
+	label = tk.Label(frame, text="Archivo de resultados creado. \n Puede cerrar esta ventana.", font=30,bg="white", fg="black")
+	label.place(relx=.1, rely=.3,relwidth=.8, relheight=.4)
 
 	# Close all
 	#time.sleep(3)
 	#gbye.destroy()
 
-def error_warn():
+def error_warn(message, color):
     # Print warning if wrong file
 	err = tk.Tk()
 
-	# Create canvas
-	canvas2 = tk.Canvas(err, height = 100, width = 500, bg='#eb2a00')
-	canvas2.pack()
+    # Create canvas
+	canvas = tk.Canvas(err, height = 100, width = 500, bg=color)
+	canvas.pack()
 	
 	# Create frame
-	frame2 = tk.Frame(err, bg='#eb2a00')
-	frame2.place(relx=0.1, relwidth=0.8, relheight=1)
+	frame = tk.Frame(err, bg=color)
+	frame.place(relwidth=1, relheight=1)
 
 	# Create prompt
-	label = tk.Label(frame2, text="Incorrect file type selected. Try again", bg="white", fg="black")
-	label.pack(side="top", fill="x")
+	label = tk.Label(frame, text=message, font=30, bg="white", fg="black")
+	label.place(relx=.1, rely=.3,relwidth=.8, relheight=.4)
 
 # Def function
 def load_file():
@@ -72,71 +74,115 @@ def load_file():
         a1 = a1.at[0, 'Fluor']
         b1 = b1.at[12, 'Fluor']
         
-        # Standards
-        std = np.array([0, 10]).reshape((-1, 1))
-        
-        # Fluorescense values
-        y = np.array([a1, b1])
-            
-        # Run regression
-        linear_regressor = LinearRegression()  # create object for the class
-        linear_regressor.fit(std, y)  # perform linear regression
-        
-        # Get values from regression
-        slope = linear_regressor.coef_
-        interc = linear_regressor.intercept_
-    
-    	# Get fluor values
-        fluor_vals = dataframe.loc[:, 'Fluor']
-    	
-        # Predicted DNA
-        predicted = (fluor_vals - interc)/slope
-        #predicted = round(predicted, 2)
-    
-        # Format for outputing
-        a = np.array([predicted[:]])
-        a = a.reshape(8,12)
-        df= pd.DataFrame(a)
-    
-    	## Write output file
-    	# Cols and rows names
-        col_names = [1,2,3,4,5,6,7,8,9,10,11,12]
-        row_names = pd.DataFrame(["","A", "B", "C", "D", "E", "F", "G", "H"])
-    	
-    	# Open file
-        writer = pd.ExcelWriter("output.xlsx", engine='xlsxwriter')
-    
-        # Write row names
-        row_names.to_excel(writer, header = False, index = False)
-        
-        # Write data
-        df.to_excel(writer, startcol = 1, header = col_names, index = False)
-    
-        # Close file
-        writer.save()
-        print("output generated")
-        quit()
     except:
-        error_warn()
+        error_warn("Archivo incorrecto; seleccione otro", "#eb2a00")
+    
+    # Define list selection
+    def CurSelet(evt):
+        method=opt.curselection()[0]
+    
+    # Open options
+    opt_w = tk.Tk()
+    
+    # Create canvas
+    canvas2 = tk.Canvas(opt_w, height = 200, width = 200, bg="white")
+    canvas2.pack()
+   	
+   	# Create frame
+    frame2 = tk.Frame(opt_w, bg="#005fcd")
+    frame2.place(relwidth=1, relheight=.25)
+   
+   	# Create prompt
+    label2 = tk.Label(frame2, text="Tipo de cuantificación", font=30, bg="white", fg="black")
+    label2.place(relx=.1, rely=.3,relwidth=.8, relheight=.4)
+    
+    # Display options
+    opt = tk.Listbox(canvas2, height=3, selectmode="SINGLE", font=30, bg="#ca8943")
+    opt.insert(1, "muestras de ADN")
+    opt.insert(2, "librerías individuales")
+    opt.bind('<<ListboxSelect>>',CurSelet)
+    opt.place(rely=.25, relwidth=1)
+
+    # Chose feats upon request
+    if (method == 1):
+        method_lab = "ADN_original"
+        factor = 1
+    elif (method == 2):
+        method_lab = "librerias"
+        factor = 4
+    
+    print(method_lab)
+    ## Compute ADN
+    # Standards
+    std = np.array([0, 10]).reshape((-1, 1))
+      
+    # Fluorescense values
+    y = np.array([a1, b1])
+       
+    # Run regression
+    linear_regressor = LinearRegression()  # create object for the class
+    linear_regressor.fit(std, y)  # perform linear regression
+      
+    # Get values from regression
+    slope = linear_regressor.coef_
+    interc = linear_regressor.intercept_
+      
+      	 # Get fluor values
+    fluor_vals = dataframe.loc[:, 'Fluor']
+      	
+    # Predicted DNA
+    predicted = (fluor_vals - interc)/slope
+    predicted = predicted * factor
+    predicted = round(predicted, 1)
+      
+    # Format for outputing
+    a = np.array([predicted[:]])
+    a = a.reshape(8,12)
+    df= pd.DataFrame(a)
+      
+      	 ## Write output file
+      	 # Cols and rows names
+    col_names = [1,2,3,4,5,6,7,8,9,10,11,12]
+    row_names = pd.DataFrame(["","A", "B", "C", "D", "E", "F", "G", "H"])
+      	
+      	 # Open file
+    writer = pd.ExcelWriter("output.xlsx", engine='xlsxwriter')
+      
+    # Write row names
+    row_names.to_excel(writer, header = False, index = False)
+      
+    # Write data
+    df.to_excel(writer, startcol = 1, header = col_names, index = False)
+      
+    # Close file
+    writer.save()
+    print("output generated")
+    quit()
         
 # Create main window
 root = tk.Tk()
 
 # Create canvas
-canvas = tk.Canvas(root, height = height, width = width, bg='#80c1ff')
+canvas = tk.Canvas(root, height = height, width = width, bg='white')
 canvas.pack()
 
-# Create frame
-frame = tk.Frame(root, bg='#80c1ff')
-frame.place(relx=0.1, relwidth=0.8, relheight=1)
+# Define image
+bck_im = tk.PhotoImage(file= "logo.png", master=root)
+bck_label = tk.Label(root, image=bck_im)
+bck_label.place(relx=0, relwidth=1, relheight=.4)
 
 # Create prompt
-label = tk.Label(frame, text="Carga en esta ventana tu archivo de resultados", bg="white")
-label.pack(side="top", fill="x")
+label = tk.Label(canvas, text="Cargue en esta ventana su archivo de resultados", bg="white", font=30)
+label.place(relwidth=1, relheight=1)
 
-# Create button
+# # Create frame
+frame = tk.Frame(root, bg='#005fcd')
+frame.place(rely=.8, relwidth=1, relheight=.2)
+
+
+# # Create button
 button = tk.Button(frame, text="Click para buscar...", bg="#ca8943", command=lambda: load_file())
-button.pack(side="top")
+button.place(relx=0.5,relwidth=.3, anchor="n")
 #root.withdraw()
 
 # Close the window
