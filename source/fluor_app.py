@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Spyder Editor
+victor_ADN
 
-This is a temporary script file.
+Author: Javier Ortiz-Tudela (github.com/ortizTud)
+
 """
 import os
 import numpy as np
@@ -80,14 +81,13 @@ def load_file():
         b1 = dataframe[dataframe.Well == "B01"]
         a1 = a1.at[0, 'Fluor']
         b1 = b1.at[12, 'Fluor']
-        
+
+        # Ask user for cuantification method
+        method = simpledialog.askstring("Input", parent=root,
+                                        prompt="Elige el tipo de cuantificación: \n 1. muestras de ADN \n 2. librerías individuales",)
     except:
         error_warn("Archivo incorrecto; seleccione otro", "#eb2a00")
-    
-    # Define list selection
-    method = simpledialog.askstring("Input", parent=root,
-                                    prompt="Elige el tipo de cuantificación: \n 1. muestras de ADN \n 2. librerías individuales",
-                                )
+        
     # Chose feats upon request
     if (method == '1'):
         method_lab = "ADN_original"
@@ -95,7 +95,6 @@ def load_file():
     elif (method == '2'):
         method_lab = "librerias"
         factor = 4
-    
     print(method_lab + " chosen as method")
     
     ## Compute ADN
@@ -120,14 +119,16 @@ def load_file():
     predicted = (fluor_vals - interc)/slope
     predicted = predicted * factor
     predicted = round(predicted, 1)
+    predicted[predicted <=0] = 0
+    print(predicted)
       
     # Format for outputing
     a = np.array([predicted[:]])
     a = a.reshape(8,12)
     df= pd.DataFrame(a)
       
-      	 ## Write output file
-      	 # Cols and rows names
+    ## Write output file
+    # Cols and rows names
     col_names = [1,2,3,4,5,6,7,8,9,10,11,12]
     row_names = pd.DataFrame(["","A", "B", "C", "D", "E", "F", "G", "H"])
     
@@ -165,15 +166,13 @@ bck_label.place(relx=0, relwidth=1, relheight=.4)
 label = tk.Label(canvas, text="Cargue en esta ventana su archivo de resultados", bg="white", font=30)
 label.place(relwidth=1, relheight=1)
 
-# # Create frame
+# Create frame
 frame = tk.Frame(root, bg='#005fcd')
 frame.place(rely=.8, relwidth=1, relheight=.2)
 
-
-# # Create button
+# Create button
 button = tk.Button(frame, text="Click para buscar...", bg="#ca8943", command=lambda: load_file())
 button.place(relx=0.5,relwidth=.3, anchor="n")
-#root.withdraw()
 
 # Close the window
 root.mainloop()
