@@ -4,12 +4,14 @@ Spyder Editor
 
 This is a temporary script file.
 """
-
+import os
 import numpy as np
 import pandas as pd
 import tkinter as tk
 from tkinter import filedialog
+from tkinter import simpledialog
 import time 
+import datetime
 from sklearn.linear_model import LinearRegression
 
 # Global variables
@@ -18,6 +20,11 @@ width = 500
 method = 999
 method_lab = "default"
    
+# Define get time
+def get_time():
+    ts = datetime.datetime.now()
+    return ts.strftime("%y%m%d_%H%M")
+    
 # Define window close
 def quit():
 
@@ -78,40 +85,19 @@ def load_file():
         error_warn("Archivo incorrecto; seleccione otro", "#eb2a00")
     
     # Define list selection
-    def CurSelet(evt):
-        method=opt.curselection()[0]
-    
-    # Open options
-    opt_w = tk.Tk()
-    
-    # Create canvas
-    canvas2 = tk.Canvas(opt_w, height = 200, width = 200, bg="white")
-    canvas2.pack()
-   	
-   	# Create frame
-    frame2 = tk.Frame(opt_w, bg="#005fcd")
-    frame2.place(relwidth=1, relheight=.25)
-   
-   	# Create prompt
-    label2 = tk.Label(frame2, text="Tipo de cuantificación", font=30, bg="white", fg="black")
-    label2.place(relx=.1, rely=.3,relwidth=.8, relheight=.4)
-    
-    # Display options
-    opt = tk.Listbox(canvas2, height=3, selectmode="SINGLE", font=30, bg="#ca8943")
-    opt.insert(1, "muestras de ADN")
-    opt.insert(2, "librerías individuales")
-    opt.bind('<<ListboxSelect>>',CurSelet)
-    opt.place(rely=.25, relwidth=1)
-
+    method = simpledialog.askstring("Input", parent=root,
+                                    prompt="Elige el tipo de cuantificación: \n 1. muestras de ADN \n 2. librerías individuales",
+                                )
     # Chose feats upon request
-    if (method == 1):
+    if (method == '1'):
         method_lab = "ADN_original"
         factor = 1
-    elif (method == 2):
+    elif (method == '2'):
         method_lab = "librerias"
         factor = 4
     
-    print(method_lab)
+    print(method_lab + " chosen as method")
+    
     ## Compute ADN
     # Standards
     std = np.array([0, 10]).reshape((-1, 1))
@@ -127,7 +113,7 @@ def load_file():
     slope = linear_regressor.coef_
     interc = linear_regressor.intercept_
       
-      	 # Get fluor values
+    # Get fluor values
     fluor_vals = dataframe.loc[:, 'Fluor']
       	
     # Predicted DNA
@@ -144,9 +130,13 @@ def load_file():
       	 # Cols and rows names
     col_names = [1,2,3,4,5,6,7,8,9,10,11,12]
     row_names = pd.DataFrame(["","A", "B", "C", "D", "E", "F", "G", "H"])
-      	
-      	 # Open file
-    writer = pd.ExcelWriter("output.xlsx", engine='xlsxwriter')
+    
+    # Open output file
+    out_dir="resultados_concentracion_ADN/"
+    os.makedirs(out_dir, exist_ok=True)
+    ts = get_time()
+    out_filename = "resultados_concentracion_ADN/" + method_lab + "_" + ts + ".xlsx"
+    writer = pd.ExcelWriter(out_filename, engine='xlsxwriter')
       
     # Write row names
     row_names.to_excel(writer, header = False, index = False)
