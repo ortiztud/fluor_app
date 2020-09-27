@@ -11,12 +11,12 @@ import pandas as pd
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import simpledialog
-import time 
 import datetime
-from sklearn.linear_model import LinearRegression
+import scipy
+from scipy import stats
 
 # Global variables
-height = 300
+height = 400
 width = 500
 method = 999
 method_lab = "default"
@@ -29,41 +29,46 @@ def get_time():
 # Define window close
 def quit():
 
-	# Print goodbye message
-	root.destroy()
-	gbye = tk.Tk()
+ 	# Print goodbye message
+ 	root.destroy()
+ 	gbye = tk.Tk()
 
-	# Create canvas
-	canvas = tk.Canvas(gbye, height = 100, width = 500, bg='#005fcd')
-	canvas.pack()
-	
-	# Create frame
-	frame = tk.Frame(gbye, bg='#005fcd')
-	frame.place(relwidth=1, relheight=1)
+ 	# Create canvas
+ 	canvas = tk.Canvas(gbye, height = 100, width = 500, bg='#005fcd')
+ 	canvas.pack()
+ 	
+ 	# Create frame
+ 	frame = tk.Frame(gbye, bg='#005fcd')
+ 	frame.place(relwidth=1, relheight=1)
 
-	# Create prompt
-	label = tk.Label(frame, text="Archivo de resultados creado. \n Puede cerrar esta ventana.", font=30,bg="white", fg="black")
-	label.place(relx=.1, rely=.3,relwidth=.8, relheight=.4)
+ 	# Create prompt
+ 	label = tk.Label(frame, text="Archivo de resultados creado. \n Puede cerrar esta ventana.", font=30,bg="white", fg="black")
+ 	label.place(relx=.1, rely=.3,relwidth=.8, relheight=.4)
+ 	
+ 	frame2 = tk.Frame(gbye, bg='#005fcd')
+ 	frame2.pack()
+ 	label2 = tk.Label(frame2, text="github.com/ortizTud", bg='#005fcd',fg="white", font=("Arial", 10, "italic"))
+ 	label2.pack()
 
 	# Close all
 	#time.sleep(3)
 	#gbye.destroy()
 
 def error_warn(message, color):
-    # Print warning if wrong file
-	err = tk.Tk()
+     # Print warning if wrong file
+ 	err = tk.Tk()
 
-    # Create canvas
-	canvas = tk.Canvas(err, height = 100, width = 500, bg=color)
-	canvas.pack()
-	
-	# Create frame
-	frame = tk.Frame(err, bg=color)
-	frame.place(relwidth=1, relheight=1)
+     # Create canvas
+ 	canvas = tk.Canvas(err, height = 100, width = 500, bg=color)
+ 	canvas.pack()
+ 	
+ 	# Create frame
+ 	frame = tk.Frame(err, bg=color)
+ 	frame.place(relwidth=1, relheight=1)
 
-	# Create prompt
-	label = tk.Label(frame, text=message, font=30, bg="white", fg="black")
-	label.place(relx=.1, rely=.3,relwidth=.8, relheight=.4)
+ 	# Create prompt
+ 	label = tk.Label(frame, text=message, font=30, bg="white", fg="black")
+ 	label.place(relx=.1, rely=.3,relwidth=.8, relheight=.4)
 
 # Def function
 def load_file():
@@ -86,6 +91,7 @@ def load_file():
         method = simpledialog.askstring("Input", parent=root,
                                         prompt="Elige el tipo de cuantificación: \n 1. muestras de ADN \n 2. librerías individuales",)
     except:
+        print("error")
         error_warn("Archivo incorrecto; seleccione otro", "#eb2a00")
         
     # Chose feats upon request
@@ -99,18 +105,17 @@ def load_file():
     
     ## Compute ADN
     # Standards
-    std = np.array([0, 10]).reshape((-1, 1))
+    std = (0, 10)
       
     # Fluorescense values
-    y = np.array([a1, b1])
+    y = (a1, b1)
        
     # Run regression
-    linear_regressor = LinearRegression()  # create object for the class
-    linear_regressor.fit(std, y)  # perform linear regression
+    linear_regressor  = scipy.stats.linregress(std,y)
       
     # Get values from regression
-    slope = linear_regressor.coef_
-    interc = linear_regressor.intercept_
+    slope = linear_regressor.slope
+    interc = linear_regressor.intercept
       
     # Get fluor values
     fluor_vals = dataframe.loc[:, 'Fluor']
@@ -120,23 +125,26 @@ def load_file():
     predicted = predicted * factor
     predicted = round(predicted, 1)
     predicted[predicted <=0] = 0
-    print(predicted)
       
     # Format for outputing
-    a = np.array([predicted[:]])
-    a = a.reshape(8,12)
-    df= pd.DataFrame(a)
+    data = np.array([predicted[:]])
+    data = data.reshape(8,12)
+    
+    # Re-code standards
+    data[0,0] = 0
+    data[1,0] = 10
+    df= pd.DataFrame(data)
       
-    ## Write output file
+    ## Write output file ##
     # Cols and rows names
     col_names = [1,2,3,4,5,6,7,8,9,10,11,12]
     row_names = pd.DataFrame(["","A", "B", "C", "D", "E", "F", "G", "H"])
     
     # Open output file
-    out_dir="resultados_concentracion_ADN/"
+    out_dir="../resultados_concentracion_ADN/"
     os.makedirs(out_dir, exist_ok=True)
     ts = get_time()
-    out_filename = "resultados_concentracion_ADN/" + method_lab + "_" + ts + ".xlsx"
+    out_filename = out_dir + method_lab + "_" + ts + ".xlsx"
     writer = pd.ExcelWriter(out_filename, engine='xlsxwriter')
       
     # Write row names
@@ -144,7 +152,7 @@ def load_file():
       
     # Write data
     df.to_excel(writer, startcol = 1, header = col_names, index = False)
-      
+    
     # Close file
     writer.save()
     print("output generated")
@@ -158,17 +166,19 @@ canvas = tk.Canvas(root, height = height, width = width, bg='white')
 canvas.pack()
 
 # Define image
-bck_im = tk.PhotoImage(file= "logo.png", master=root)
+bck_im = tk.PhotoImage(file= ".img\logo.png", master=root)
 bck_label = tk.Label(root, image=bck_im)
 bck_label.place(relx=0, relwidth=1, relheight=.4)
 
 # Create prompt
 label = tk.Label(canvas, text="Cargue en esta ventana su archivo de resultados", bg="white", font=30)
-label.place(relwidth=1, relheight=1)
+label.place(rely=0.1,relwidth=1, relheight=1)
 
 # Create frame
 frame = tk.Frame(root, bg='#005fcd')
 frame.place(rely=.8, relwidth=1, relheight=.2)
+label2 = tk.Label(frame, text="github.com/ortizTud", bg='#005fcd',fg="white", font=("Arial", 10, "italic"))
+label2.pack(side="right")
 
 # Create button
 button = tk.Button(frame, text="Click para buscar...", bg="#ca8943", command=lambda: load_file())
