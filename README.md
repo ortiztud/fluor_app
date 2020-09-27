@@ -1,9 +1,14 @@
 # victor_ADN
-Small executable that takes in txt with fluorescense values and outputs interpolated values of DNA. A prompt is added to ask the user about which quantification method to use (ADN or libraries).
+Small script that takes in txt with fluorescense values and outputs interpolated values of DNA as an excel file. A prompt is added to ask the user about which quantification method to use (ADN or libraries).
 
-- Written in Python3 and turned into exe with [auto-py-to-exe](https://pypi.org/project/auto-py-to-exe/)
+The `data` folder contains an example txt file for debugging purposes.
 
-- Verified compatibility with Windows and Linux
+## Requirements
+- Python3
+- numpy
+- pandas
+- tkinter
+- datetime
+- scipy
 
-## Download
-Click [here](https://drive.google.com/file/d/1VvPIoUu9UzUKa7oZju7nxiZWseJ8--_b/view?usp=sharing) to **download** the app.
+**NOTE** It can be easily turn into an exe with [auto-py-to-exe](https://pypi.org/project/auto-py-to-exe/). Check with me if you need assistance.
